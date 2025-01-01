@@ -23,7 +23,7 @@
     </nav>
   </header>
 
-  <main class="container">
+  <main class="container max-w-screen-lg mx-auto px-4 md:px-12 py-8">
     {{ $slot }}
   </main>
 
