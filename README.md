@@ -1,11 +1,13 @@
 # Driving Theory Test Application
 
-![Description of the image](./image.jpg)
+![Description of the image](./image_1.jpg)
 
 This is a web application designed to help users prepare for driving license exams by practicing with official test questions. The questions are sourced from the Polish government's official website [gov.pl](https://www.gov.pl/web/infrastruktura/prawo-jazdy), ensuring they match the ones used in real driving tests.
 
-<img src="./image2.png" style="width:250px"/>
-<img src="./image3.png" style="width:250px"/>
+<p align="center">
+<img src="./image_2.png" style="width:250px"/>
+<img src="./image_3.png" style="width:250px"/>
+</p>
 
 ## Demo
 
