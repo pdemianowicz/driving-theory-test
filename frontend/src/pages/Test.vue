@@ -98,9 +98,9 @@
 </template>
 
 <script setup>
-import axios from "axios";
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import axiosClient from "../axios.js";
 import ProgressBar from "../components/ProgressBar.vue";
 
 const route = useRoute();
@@ -116,21 +116,16 @@ const selectedAnswer = ref(null);
 const isTestFinished = ref(false);
 
 const fetchQuestions = async () => {
-  const url = `http://127.0.0.1:8000/api/test/${uuid}/questions`;
-
   try {
-    const response = await axios.get(url);
-
+    const response = await axiosClient.get(`/api/test/${uuid}/questions`);
     const data = response.data;
-    console.log(data);
-
     categoryName.value = data.category_name;
     questions.value.push(...data.questions);
     console.log("Fetched questions:", questions.value);
   } catch (error) {
     if (error.response?.status === 302) {
-      console.warn("Nie masz dostępu do testu.");
-      window.location.href = "/"; // Przekierowanie na stronę główną
+      console.warn("No access to test!");
+      router.push({ name: "Home" });
     } else {
       console.error("Error fetching questions:", error);
     }
@@ -206,16 +201,9 @@ const specialistQuestionCount = computed(() => {
 
 const submitAnswer = async () => {
   try {
-    const url = `http://127.0.0.1:8000/api/test/${uuid}/answer`;
-    const data = {
+    await axiosClient.post(`/api/test/${uuid}/answer`, {
       question_id: currentQuestion.value.id,
       answer_id: selectedAnswer.value,
-    };
-
-    await axios.post(url, data, {
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
   } catch (error) {
     console.error("Error submitting answer:", error);
@@ -228,16 +216,7 @@ const finishTest = async () => {
 
   try {
     submitAnswer();
-
-    const url = `http://127.0.0.1:8000/api/test/${uuid}/finish`;
-
-    const response = await axios.post(url, {
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content"),
-      },
-    });
-
+    const response = await axiosClient.post(`/api/test/${uuid}/finish`);
     if (response.status !== 200) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

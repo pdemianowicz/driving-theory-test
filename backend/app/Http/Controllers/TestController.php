@@ -109,8 +109,6 @@ class TestController extends Controller
             ];
         }
 
-        // return response()->json($userAnswersWithAllOptions);
-
         return response()->json([
             'category'     => $session->category->name,
             'completed_at' => $session->completed_at,

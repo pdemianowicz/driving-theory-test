@@ -84,9 +84,9 @@
 </template>
 
 <script setup>
-import axios from "axios";
 import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
+import axiosClient from "../axios.js";
 
 const route = useRoute();
 const uuid = route.params.uuid;
@@ -102,10 +102,8 @@ const results = ref([]);
 const currentResultIndex = ref(0);
 
 const fetchResults = async () => {
-  const url = `http://127.0.0.1:8000/api/test/${uuid}/results`;
-
   try {
-    const response = await axios.get(url);
+    const response = await axiosClient.get(`/api/test/${uuid}/results`);
     resultsData.value = response.data;
 
     console.log("Fetched results:", resultsData.value);
