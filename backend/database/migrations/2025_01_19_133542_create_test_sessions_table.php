@@ -15,7 +15,9 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
             $table->boolean('is_completed')->default(false);
+            $table->integer('current_question_index')->default(0);
             $table->timestamps();
             $table->timestamp('completed_at')->nullable();
         });

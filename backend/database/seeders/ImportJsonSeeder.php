@@ -22,37 +22,52 @@ class ImportJsonSeeder extends Seeder
         // Iteruj przez dane i zaimportuj je do bazy danych
         foreach ($data as $item) {
             // Znajdź lub utwórz kategorię
-            $categories = explode(',', $item['Kategorie']);
+            $categories  = explode(',', $item['Kategorie']);
+            $categoryIds = [];
             foreach ($categories as $categoryName) {
-                $category = Category::firstOrCreate(['name' => trim($categoryName)]);
+                $category      = Category::firstOrCreate(['name' => trim($categoryName)]);
+                $categoryIds[] = $category->id;
+            }
 
-                // Utwórz pytanie
-                $question = Question::create([
-                    'category_id'   => $category->id,
-                    'number'        => $item['Numer pytania'],
-                    'content'       => $item['Pytanie'],
-                    'media'         => $item['Media'],
-                    'question_type' => 'basic', // Zakładam, że wszystkie pytania są typu 'basic'
-                ]);
+            // Określ typ pytania na podstawie obecności odpowiedzi
+            $isSpecialist = ! empty($item['Odpowiedź A']) || ! empty($item['Odpowiedź B']) || ! empty($item['Odpowiedź C']);
+            $questionType = $isSpecialist ? 'specialist' : 'basic';
 
-                // Utwórz odpowiedzi dla pytania
+            // Utwórz pytanie
+            $question = Question::create([
+                'number'        => $item['Numer pytania'],
+                'content'       => $item['Pytanie'],
+                'media'         => $item['Media'],
+                'question_type' => $questionType,
+            ]);
+
+            // Przypisz kategorie do pytania
+            $question->categories()->attach($categoryIds);
+
+            // Utwórz odpowiedzi dla pytania
+            if ($questionType === 'basic') {
+                $answers = [
+                    ['content' => 'Tak', 'is_correct' => $item['Poprawna odp'] === 'Tak'],
+                    ['content' => 'Nie', 'is_correct' => $item['Poprawna odp'] === 'Nie'],
+                ];
+            } else {
                 $answers = [
                     ['content' => $item['Odpowiedź A'], 'is_correct' => $item['Poprawna odp'] === 'A'],
                     ['content' => $item['Odpowiedź B'], 'is_correct' => $item['Poprawna odp'] === 'B'],
                     ['content' => $item['Odpowiedź C'], 'is_correct' => $item['Poprawna odp'] === 'C'],
                 ];
+            }
 
-                foreach ($answers as $answerData) {
-                    if (! empty($answerData['content'])) {
-                        Answer::create([
-                            'question_id'    => $question->id,
-                            'answer_content' => $answerData['content'],
-                            'is_correct'     => $answerData['is_correct'],
-                        ]);
-                    }
+            foreach ($answers as $answerData) {
+                if (! empty($answerData['content'])) {
+                    Answer::create([
+                        'question_id'    => $question->id,
+                        'answer_content' => $answerData['content'],
+                        'is_correct'     => $answerData['is_correct'],
+                    ]);
                 }
             }
         }
-
     }
+
 }

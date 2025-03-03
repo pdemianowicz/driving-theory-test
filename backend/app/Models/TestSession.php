@@ -11,7 +11,7 @@ class TestSession extends Model
     /** @use HasFactory<\Database\Factories\TestSessionFactory> */
     use HasFactory;
 
-    protected $fillable = ['uuid', 'category_id', 'is_completed', 'completed_at'];
+    protected $fillable = ['uuid', 'category_id', 'is_completed', 'completed_at', 'user_id'];
 
     public function category(): BelongsTo
     {
@@ -22,4 +22,10 @@ class TestSession extends Model
     {
         return $this->hasMany(TestAnswer::class);
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
 }

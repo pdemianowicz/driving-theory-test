@@ -1,7 +1,7 @@
 <template>
-  <div class="flex min-h-full flex-1 flex-col justify-center sm:px-6 py-12 lg:px-8">
+  <div class="flex min-h-full flex-1 flex-col justify-center sm:px-6 py-12 lg:px-8 dark:bg-[#1d2021] -mt-[56px]">
     <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-      <h2 class="text-center text-2xl/9 font-bold tracking-tight text-gray-900">
+      <h2 class="text-center text-2xl/9 font-bold tracking-tight text-gray-900 dark:text-stone-300">
         <slot name="header"></slot>
       </h2>
     </div>
@@ -11,7 +11,7 @@
     </div>
 
     <div class="mx-auto mt-10 w-full">
-      <div class="sm:mx-auto sm:w-full sm:max-w-[480px] bg-white px-6 py-12 rounded-lg shadow">
+      <div class="sm:mx-auto sm:w-full sm:max-w-[480px] bg-white dark:bg-[#181a1b] px-6 py-12 rounded-lg shadow">
         <form @submit.prevent="submit" class="space-y-6" action="#" method="POST">
           <slot></slot>
         </form>

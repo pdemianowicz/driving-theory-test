@@ -19,7 +19,6 @@ class QuestionFactory extends Factory
     public function definition(): array
     {
         return [
-            'category_id'   => Category::inRandomOrder()->limit(1)->first()->id,
             'number'        => fake()->unique()->numberBetween(1, 9000),
             'content'       => fake()->sentence(6),
             'media'         => fake()->word(),
@@ -30,6 +29,10 @@ class QuestionFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (Question $question) {
+
+            $categories = Category::inRandomOrder()->limit(3)->pluck('id');
+            $question->categories()->attach($categories);
+
             if ($question->question_type === 'basic') {
                 $answers = ['Tak', 'Nie'];
             } else {

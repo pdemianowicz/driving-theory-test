@@ -13,12 +13,13 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->string('number')->unique();
             $table->text('content');
             $table->string('media')->nullable();
             $table->string('question_type')->check('question_type IN ("basic", "specialist")');
             $table->timestamps();
+
+            $table->index('question_type');
         });
     }
 

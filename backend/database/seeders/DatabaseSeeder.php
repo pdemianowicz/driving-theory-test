@@ -3,10 +3,6 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
-use App\Models\Category;
-use App\Models\Question;
-use App\Models\TestAnswer;
-use App\Models\TestSession;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -16,13 +12,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        Category::factory(12)->create();
-        Question::factory(50)->create();
-        TestSession::factory(5)->create();
-        TestAnswer::factory(20)->create();
+        // Category::factory(12)->create();
+        // Question::factory(50)->create();
+        // TestSession::factory(5)->create();
+        // TestAnswer::factory(20)->create();
 
-        //   $this->call([
-        //     ImportJsonSeeder::class,
-        // ]);
+        $this->call([
+            ImportJsonSeeder::class,
+        ]);
     }
 }

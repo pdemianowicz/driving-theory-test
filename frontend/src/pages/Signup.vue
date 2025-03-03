@@ -104,7 +104,8 @@ function submit() {
     axiosClient
       .post("/register", data.value)
       .then((response) => {
-        router.push({ name: "Home" });
+        // router.push({ name: "Home" });
+        window.location.href = "/";
       })
       .catch((error) => {
         console.log(error.response.data);

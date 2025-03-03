@@ -4,18 +4,24 @@ import axiosClient from "../axios.js";
 export const useUserStore = defineStore("user", {
   state: () => ({
     user: null,
+    hasFetchedUser: false,
   }),
   actions: {
-    fetchUser() {
-      return axiosClient.get("/api/user").then(({ data }) => {
-        console.log(data);
+    async fetchUser() {
+      if (this.hasFetchedUser) return;
+      try {
+        const { data } = await axiosClient.get("/api/user");
         this.user = data;
-      });
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      } finally {
+        this.hasFetchedUser = true;
+      }
     },
-    logout() {
-      return axiosClient.post("/logout").then(() => {
-        this.user = null;
-      });
+    async logout() {
+      await axiosClient.post("/logout");
+      this.user = null;
+      this.hasFetchedUser = false;
     },
   },
   getters: {
