@@ -10,6 +10,7 @@ use App\Models\Test;
 use App\Models\TestQuestion;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -18,8 +19,9 @@ class TestController extends Controller
     // Show all categories
     public function getCategories()
     {
-        $categories = Cache::rememberForever('categories', function () {
-            return Category::all();
+        $locale     = App::getLocale();
+        $categories = Cache::rememberForever('categories:' . $locale, function () {
+            return Category::with('translations')->get();
         });
 
         return CategoryResource::collection($categories);
@@ -28,33 +30,33 @@ class TestController extends Controller
     // Start a new test for a given category
     public function initTest(Request $request)
     {
+
         $request->validate([
             'category_id' => 'required|exists:categories,id',
         ]);
 
-        $category = Category::select('id', 'name')->findOrFail($request->category_id);
+        $headerLocale = $request->header('X-Locale');
+        App::setLocale($headerLocale);
+
+        $category = Category::with('translations')->findOrFail($request->category_id);
 
         $questions = $this->selectQuestions($category);
-        $test      = $this->createTest($category, $questions);
+
+        $test = Test::create([
+            'user_id'         => Auth::id(),
+            'category_id'     => $category->id,
+            'started_at'      => now(),
+            'total_questions' => $questions->count(),
+        ]);
+
         $this->createTestQuestions($test, $questions);
 
         return response()->json([
             'test_id'   => $test->id,
             'questions' => TestQuestionResource::collection($questions),
-            'category'  => $category,
-            'message'   => 'Sesja testowa rozpoczęta!',
+            'category'  => new CategoryResource($category),
         ]);
 
-    }
-
-    private function createTest(Category $category, $questions)
-    {
-        return Test::create([
-            'user_id'         => Auth::id(),
-            'category_id'     => $category->id,
-            'started_at'      => now(),
-            'total_questions' => count($questions),
-        ]);
     }
 
     private function selectQuestions(Category $category)
@@ -65,7 +67,7 @@ class TestController extends Controller
             ->where('type', 'basic')
             ->inRandomOrder()
             ->limit(20)
-            ->with(['answers'])
+            ->with(['translations', 'answers.translations'])
             ->get();
 
         $specialistQuestions = Question::whereHas('categories', function ($query) use ($category) {
@@ -74,7 +76,7 @@ class TestController extends Controller
             ->where('type', 'specialist')
             ->inRandomOrder()
             ->limit(12)
-            ->with(['answers'])
+            ->with(['translations', 'answers.translations'])
             ->get();
 
         return $basicQuestions->concat($specialistQuestions)->values();
@@ -108,32 +110,45 @@ class TestController extends Controller
         $isCorrect = null;
 
         if ($answerId !== null) {
-            $correctAnswer = $testQuestion->question->answers()->where('is_correct', true)->first();
-            $isCorrect     = ($correctAnswer && $correctAnswer->id == $answerId);
+            $correctAnswer = $testQuestion->question->answers->firstWhere('is_correct', true);
+            $isCorrect     = $correctAnswer && $correctAnswer->id == $answerId;
         }
 
-        $testQuestion->answer_id         = $answerId;
-        $testQuestion->is_correct        = $isCorrect;
-        $testQuestion->answer_time_taken = $answerTimeTaken;
-        $testQuestion->save();
+        $testQuestion->update([
+            'answer_id'         => $answerId,
+            'is_correct'        => $isCorrect,
+            'answer_time_taken' => $answerTimeTaken,
+        ]);
 
         return response()->json(['message' => 'Odpowiedź zapisana!']);
     }
 
-    public function finishTest(Test $test)
+    // finish test
+    public function finishTest(Request $request, Test $test)
     {
-        $test->completed_at = now();
-        $test->save();
+        $request->validate([
+            'time_taken' => 'nullable|integer|min:0',
+        ]);
+
+        $timeTaken = $request->input('time_taken');
+
+        $test->update([
+            'completed_at' => now(),
+            'time_taken'   => $timeTaken,
+        ]);
 
         return response()->json(['message' => 'Test zakończony!']);
     }
 
+    // show results of test
     public function getTestResult(Test $test)
     {
-        $testQuestions = $test->testQuestions()->with('question.answers')->get();
-        $test->load('category');
+        $test->load([
+            'category',
+            'testQuestions.question.answers',
+        ]);
 
-        return new TestResultResource($test, $testQuestions);
+        return new TestResultResource($test);
     }
 
 }

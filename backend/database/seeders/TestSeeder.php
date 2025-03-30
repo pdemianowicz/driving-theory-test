@@ -12,6 +12,9 @@ class TestSeeder extends Seeder
      */
     public function run(): void
     {
-        Test::factory()->count(3)->has(TestQuestion::factory()->count(32), 'testQuestions')->create();
+        Test::factory()
+            ->count(3)
+            ->has(TestQuestion::factory()->count(32), 'testQuestions')
+            ->create();
     }
 }

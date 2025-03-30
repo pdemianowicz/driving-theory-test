@@ -2,6 +2,7 @@
 namespace Database\Seeders;
 
 use App\Models\Answer;
+use App\Models\AnswerTranslation;
 use App\Models\Category;
 use App\Models\Question;
 use Illuminate\Database\Seeder;
@@ -14,8 +15,12 @@ class QuestionSeeder extends Seeder
     public function run(): void
     {
         $categories = Category::all();
+        $locales    = ['pl', 'en', 'de', 'uk'];
 
-        Question::factory(100)->create()->each(function ($question) use ($categories) {
+        $yesTranslations = ['pl' => 'Tak', 'en' => 'Yes', 'de' => 'Ja', 'uk' => 'Так'];
+        $noTranslations  = ['pl' => 'Nie', 'en' => 'No', 'de' => 'Nein', 'uk' => 'Ні'];
+
+        Question::factory(100)->create()->each(function ($question) use ($categories, $locales, $yesTranslations, $noTranslations) {
             $question->categories()->attach(
                 $categories->random(rand(1, 3))->pluck('id')->toArray()
             );
@@ -23,19 +28,31 @@ class QuestionSeeder extends Seeder
             if ($question->type === 'basic') {
 
                 $isCorrect = fake()->boolean();
-                Answer::factory()->create(['question_id' => $question->id, 'content' => 'Yes', 'is_correct' => $isCorrect]);
-                Answer::factory()->create(['question_id' => $question->id, 'content' => 'No', 'is_correct' => ! $isCorrect]);
+                $yesAnswer = Answer::factory()->create(['question_id' => $question->id, 'is_correct' => $isCorrect]);
+                foreach ($locales as $locale) {
+                    AnswerTranslation::updateOrCreate(
+                        ['answer_id' => $yesAnswer->id, 'locale' => $locale],
+                        ['content' => $yesTranslations[$locale]]
+                    );
+                }
+
+                $noAnswer = Answer::factory()->create(['question_id' => $question->id, 'is_correct' => ! $isCorrect]);
+                foreach ($locales as $locale) {
+                    AnswerTranslation::updateOrCreate(
+                        ['answer_id' => $noAnswer->id, 'locale' => $locale],
+                        ['content' => $noTranslations[$locale]]
+                    );
+                }
 
             } else {
-                $answers = [
-                    Answer::factory()->create(['question_id' => $question->id]),
-                    Answer::factory()->create(['question_id' => $question->id]),
-                    Answer::factory()->create(['question_id' => $question->id]),
-                ];
+                $answers = Answer::factory(3)->create([
+                    'question_id' => $question->id,
+                    'is_correct'  => false,
+                ]);
 
-                $correctAnswerIndex                       = fake()->numberBetween(0, 2);
-                $answers[$correctAnswerIndex]->is_correct = true;
-                $answers[$correctAnswerIndex]->save();
+                $correctAnswer             = $answers->random();
+                $correctAnswer->is_correct = true;
+                $correctAnswer->save();
             }
         });
     }

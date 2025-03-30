@@ -1,6 +1,8 @@
 <?php
 namespace Database\Factories;
 
+use App\Models\Question;
+use App\Models\QuestionTranslation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,10 +18,23 @@ class QuestionFactory extends Factory
     public function definition(): array
     {
         return [
-            'content' => $this->faker->sentence(),
-            'media'   => $this->faker->word() . '.jpg',
-            'type'    => $this->faker->randomElement(['basic', 'specialist']),
-            'points'  => $this->faker->numberBetween(1, 3),
+            // 'content' => $this->faker->sentence(),
+            'media'  => $this->faker->word() . '.jpg',
+            'type'   => $this->faker->randomElement(['basic', 'specialist']),
+            'points' => $this->faker->numberBetween(1, 3),
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Question $question) {
+            $locales = ['pl', 'en', 'de', 'uk'];
+            foreach ($locales as $locale) {
+                QuestionTranslation::factory()->create([
+                    'question_id' => $question->id,
+                    'locale'      => $locale,
+                ]);
+            }
+        });
     }
 }

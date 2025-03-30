@@ -12,10 +12,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('answers', function (Blueprint $table) {
+        Schema::create('question_translations', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Question::class)->constrained()->onDelete('cascade')->index();
-            $table->boolean('is_correct');
+            $table->foreignIdFor(Question::class)->constrained()->onDelete('cascade');
+            $table->string('locale')->index();
+            $table->text('content');
+            $table->text('explanation')->nullable();
+            $table->unique(['question_id', 'locale']);
             $table->timestamps();
         });
     }
@@ -25,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('answers');
+        Schema::dropIfExists('question_translations');
     }
 };

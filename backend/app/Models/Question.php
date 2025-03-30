@@ -14,10 +14,13 @@ class Question extends Model
     protected $table = 'questions';
 
     protected $fillable = [
-        'content',
-        'media',
         'type',
+        'media',
         'points',
+    ];
+
+    protected $casts = [
+        'points' => 'integer',
     ];
 
     public function categories(): BelongsToMany
@@ -28,6 +31,26 @@ class Question extends Model
     public function answers(): HasMany
     {
         return $this->hasMany(Answer::class);
+    }
+
+    public function translations(): HasMany
+    {
+        return $this->hasMany(QuestionTranslation::class);
+    }
+
+    public function translation(?string $locale = null)
+    {
+        return $this->translations()->firstWhere('locale', $locale ?? app()->getLocale());
+    }
+
+    public function getContentAttribute(): ?string
+    {
+        return $this->translation()?->content;
+    }
+
+    public function getExplanationAttribute(): ?string
+    {
+        return $this->translation()?->explanation;
     }
 
 }

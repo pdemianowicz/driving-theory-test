@@ -1,6 +1,8 @@
 <?php
 namespace Database\Factories;
 
+use App\Models\Answer;
+use App\Models\AnswerTranslation;
 use App\Models\Question;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -18,9 +20,23 @@ class AnswerFactory extends Factory
     {
         return [
             'question_id' => Question::factory(),
-            'content'     => $this->faker->sentence(5),
+            // 'content'     => $this->faker->sentence(5),
             'is_correct'  => false,
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Answer $answer) {
+            $locales = ['pl', 'en', 'de', 'uk'];
+            foreach ($locales as $locale) {
+
+                AnswerTranslation::factory()->create([
+                    'answer_id' => $answer->id,
+                    'locale'    => $locale,
+                ]);
+            }
+        });
     }
 
 }

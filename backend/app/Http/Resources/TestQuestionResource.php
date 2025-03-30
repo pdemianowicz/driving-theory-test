@@ -14,12 +14,13 @@ class TestQuestionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'      => $this->id,
-            'content' => $this->content,
-            'type'    => $this->type,
-            'media'   => $this->media,
-            'points'  => $this->points,
-            'answers' => AnswerResource::collection($this->answers),
+            'id'          => $this->id,
+            'content'     => $this->content,
+            'explanation' => $this->explanation,
+            'type'        => $this->type,
+            'media'       => $this->media,
+            'points'      => $this->points,
+            'answers'     => AnswerResource::collection($this->answers),
         ];
 
     }

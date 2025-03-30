@@ -1,6 +1,8 @@
 <?php
 namespace Database\Factories;
 
+use App\Models\Category;
+use App\Models\CategoryTranslation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,8 +18,23 @@ class CategoryFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'        => 'Kategoria ' . strtoupper(fake()->unique()->randomLetter),
-            'description' => fake()->realText(120),
+            // 'name'        => 'Kategoria ' . strtoupper(fake()->unique()->randomLetter),
+            // 'description' => fake()->realText(120),
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Category $category) {
+            $locales          = ['pl', 'en', 'de', 'uk'];
+            $baseCategoryCode = strtoupper(fake()->unique()->randomLetter());
+            foreach ($locales as $locale) {
+                CategoryTranslation::factory()->create([
+                    'category_id' => $category->id,
+                    'locale'      => $locale,
+                    'name'        => $baseCategoryCode,
+                ]);
+            }
+        });
     }
 }
