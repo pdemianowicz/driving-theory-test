@@ -19,6 +19,7 @@ class TestQuestion extends Model
         'is_correct',
         'answer_time_taken',
         'question_order',
+        'points',
     ];
 
     public function test(): BelongsTo

@@ -13,13 +13,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\ItemNotFoundException;
 
 class TestController extends Controller
 {
+    const MAX_POSSIBLE_SCORE = 74;
+    const PASSING_SCORE      = 68;
+
     // Show all categories
     public function getCategories()
     {
-        $locale     = App::getLocale();
+        $locale = App::getLocale();
+        // $locale     = 'pl';
         $categories = Cache::rememberForever('categories:' . $locale, function () {
             return Category::with('translations')->get();
         });
@@ -42,56 +48,100 @@ class TestController extends Controller
 
         $questions = $this->selectQuestions($category);
 
-        $test = Test::create([
-            'user_id'         => Auth::id(),
-            'category_id'     => $category->id,
-            'started_at'      => now(),
-            'total_questions' => $questions->count(),
-        ]);
+        $test = DB::transaction(function () use ($category, $questions) {
+            $test = Test::create([
+                'user_id'            => Auth::id(),
+                'category_id'        => $category->id,
+                'started_at'         => now(),
+                'total_questions'    => $questions->count(),
+                'max_possible_score' => self::MAX_POSSIBLE_SCORE,
+                'score'              => 0,
+            ]);
 
-        $this->createTestQuestions($test, $questions);
+            $this->createTestQuestions($test, $questions);
+
+            return $test;
+        });
+
+        $testQuestions = $test->testQuestions()->with(['question.translations', 'question.answers.translations'])->orderBy('question_order')->get();
 
         return response()->json([
-            'test_id'   => $test->id,
-            'questions' => TestQuestionResource::collection($questions),
-            'category'  => new CategoryResource($category),
+            'test_id'            => $test->id,
+            // 'questions'          => TestQuestionResource::collection($testQuestions),
+            'questions'          => TestQuestionResource::collection($questions),
+            'category'           => new CategoryResource($category),
+            'max_possible_score' => self::MAX_POSSIBLE_SCORE,
         ]);
 
     }
 
     private function selectQuestions(Category $category)
     {
-        $basicQuestions = Question::whereHas('categories', function ($query) use ($category) {
-            $query->where('categories.id', $category->id);
-        })
-            ->where('type', 'basic')
-            ->inRandomOrder()
-            ->limit(20)
-            ->with(['translations', 'answers.translations'])
-            ->get();
+        $queryBuilder = function ($type, $points) use ($category) {
+            return Question::whereHas('categories', function ($query) use ($category) {
+                $query->where('categories.id', $category->id);
+            })
+                ->where('type', $type)
+                ->where('points', $points)
+                ->with(['translations', 'answers.translations']);
+        };
 
-        $specialistQuestions = Question::whereHas('categories', function ($query) use ($category) {
-            $query->where('categories.id', $category->id);
-        })
-            ->where('type', 'specialist')
-            ->inRandomOrder()
-            ->limit(12)
-            ->with(['translations', 'answers.translations'])
-            ->get();
+        // --- (Basic) ---
+        $basic3Points = $queryBuilder('basic', 3)->inRandomOrder()->limit(10)->get();
+        if ($basic3Points->count() < 10) {
+            throw new ItemNotFoundException("Brak wystarczającej liczby pytań podstawowych za 3 punkty.");
+        }
 
-        return $basicQuestions->concat($specialistQuestions)->values();
+        $basic2Points = $queryBuilder('basic', 2)->inRandomOrder()->limit(6)->get();
+        if ($basic2Points->count() < 6) {
+            throw new ItemNotFoundException("Brak wystarczającej liczby pytań podstawowych za 2 punkty.");
+        }
+
+        $basic1Point = $queryBuilder('basic', 1)->inRandomOrder()->limit(4)->get();
+        if ($basic1Point->count() < 4) {
+            throw new ItemNotFoundException("Brak wystarczającej liczby pytań podstawowych za 1 punkt.");
+        }
+
+        // --- (Specialist) ---
+        $specialist3Points = $queryBuilder('specialist', 3)->inRandomOrder()->limit(6)->get();
+        if ($specialist3Points->count() < 6) {
+            throw new ItemNotFoundException("Brak wystarczającej liczby pytań specjalistycznych za 3 punkty.");
+        }
+
+        $specialist2Points = $queryBuilder('specialist', 2)->inRandomOrder()->limit(4)->get();
+        if ($specialist2Points->count() < 4) {
+            throw new ItemNotFoundException("Brak wystarczającej liczby pytań specjalistycznych za 2 punkty.");
+        }
+
+        $specialist1Point = $queryBuilder('specialist', 1)->inRandomOrder()->limit(2)->get();
+        if ($specialist1Point->count() < 2) {
+            throw new ItemNotFoundException("Brak wystarczającej liczby pytań specjalistycznych za 1 punkt.");
+        }
+
+        $shuffledBasicQuestions      = $basic3Points->concat($basic2Points)->concat($basic1Point)->shuffle();
+        $shuffledSpecialistQuestions = $specialist3Points->concat($specialist2Points)->concat($specialist1Point)->shuffle();
+        $finalOrderedQuestions       = $shuffledBasicQuestions->concat($shuffledSpecialistQuestions);
+
+        return $finalOrderedQuestions->values();
     }
 
     private function createTestQuestions(Test $test, Collection $questions)
     {
-        $questionOrder = 1;
+        $questionOrder     = 1;
+        $testQuestionsData = [];
+        $now               = now();
+
         foreach ($questions as $question) {
-            TestQuestion::create([
+            $testQuestionsData[] = [
                 'test_id'        => $test->id,
                 'question_id'    => $question->id,
                 'question_order' => $questionOrder++,
-            ]);
+                'points'         => $question->points,
+                'created_at'     => $now,
+                'updated_at'     => $now,
+            ];
         }
+        TestQuestion::insert($testQuestionsData);
     }
 
     // Save answers
@@ -132,9 +182,14 @@ class TestController extends Controller
 
         $timeTaken = $request->input('time_taken');
 
+        $score = $test->testQuestions()
+            ->where('is_correct', true)
+            ->sum('points');
+
         $test->update([
             'completed_at' => now(),
             'time_taken'   => $timeTaken,
+            'score'        => $score,
         ]);
 
         return response()->json(['message' => 'Test zakończony!']);
@@ -143,8 +198,14 @@ class TestController extends Controller
     // show results of test
     public function getTestResult(Test $test)
     {
+        $test->refresh();
+
+        if (! $test->completed_at) {
+            return response()->json(['message' => 'Test nie został jeszcze zakończony.'], 403);
+        }
+
         $test->load([
-            'category',
+            'category.translations',
             'testQuestions.question.answers',
         ]);
 

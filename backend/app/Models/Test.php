@@ -19,6 +19,7 @@ class Test extends Model
         'started_at',
         'completed_at',
         'score',
+        'max_possible_score',
         'total_questions',
         'time_taken',
     ];

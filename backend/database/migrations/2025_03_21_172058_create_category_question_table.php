@@ -15,8 +15,8 @@ return new class extends Migration
     {
         Schema::create('category_question', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Category::class)->onDelete('cascade')->index();
-            $table->foreignIdFor(Question::class)->onDelete('cascade')->index();
+            $table->foreignIdFor(Category::class)->constrained()->onDelete('cascade');
+            $table->foreignIdFor(Question::class)->constrained()->onDelete('cascade');
 
             $table->unique(['category_id', 'question_id']);
         });

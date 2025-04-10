@@ -16,12 +16,13 @@ return new class extends Migration
     {
         Schema::create('test_questions', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Test::class)->onDelete('cascade')->index();
-            $table->foreignIdFor(Question::class)->onDelete('cascade')->index();
-            $table->foreignIdFor(Answer::class)->nullable()->onDelete('set null')->index();
+            $table->foreignIdFor(Test::class)->constrained()->onDelete('cascade');
+            $table->foreignIdFor(Question::class)->constrained()->onDelete('cascade');
+            $table->foreignIdFor(Answer::class)->nullable()->constrained()->onDelete('set null');
             $table->boolean('is_correct')->nullable();
             $table->unsignedInteger('answer_time_taken')->nullable();
             $table->unsignedInteger('question_order');
+            $table->unsignedTinyInteger('points')->default(0);
             $table->timestamps();
         });
     }

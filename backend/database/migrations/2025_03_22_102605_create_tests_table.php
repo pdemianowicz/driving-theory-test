@@ -15,11 +15,12 @@ return new class extends Migration
     {
         Schema::create('tests', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Category::class)->onDelete('set null')->index();
-            $table->foreignIdFor(User::class)->nullable()->onDelete('set null')->index();
+            $table->foreignIdFor(Category::class)->constrained()->onDelete('set null');
+            $table->foreignIdFor(User::class)->nullable()->constrained()->onDelete('set null');
             $table->timestamp('started_at');
             $table->timestamp('completed_at')->nullable();
             $table->unsignedInteger('score')->default(0);
+            $table->unsignedInteger('max_possible_score')->default(0);
             $table->unsignedInteger('total_questions');
             $table->unsignedInteger('time_taken')->nullable();
             $table->timestamps();
