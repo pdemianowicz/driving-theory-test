@@ -13,3 +13,5 @@ Route::post('/initTest', [TestController::class, 'initTest']);
 Route::post('/{test}/{questionOrder}/answer', [TestController::class, 'answerQuestion']);
 Route::post('/{test}/finish', [TestController::class, 'finishTest']);
 Route::get('/{test}/results', [TestController::class, 'getTestResult']);
+
+Route::get('/categories/{category}/learn-questions', [TestController::class, 'getLearnQuestions']);

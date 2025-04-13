@@ -21,6 +21,43 @@ class TestController extends Controller
     const MAX_POSSIBLE_SCORE = 74;
     const PASSING_SCORE      = 68;
 
+    public function getLearnQuestions(Request $request, Category $category)
+    {
+                                                                  // Ustawienie lokalizacji na podstawie nagłówka (opcjonalne, ale dobre dla tłumaczeń)
+        $locale = $request->header('X-Locale', App::getLocale()); // Pobierz z nagłówka lub użyj domyślnego
+        App::setLocale($locale);
+
+        // Klucz cache unikalny dla kategorii i lokalizacji
+        $cacheKey = 'learn_questions:' . $category->id . ':' . $locale;
+
+        // Spróbuj pobrać z cache, jeśli nie ma, wykonaj zapytanie i zapisz w cache
+        // Cache::forget($cacheKey); // Użyj do czyszczenia cache podczas dewelopmentu
+        $learnData = Cache::rememberForever($cacheKey, function () use ($category) {
+            // Pobierz wszystkie pytania dla tej kategorii
+            // Eager load tłumaczeń dla pytań, odpowiedzi i wyjaśnień
+            $questions = $category->questions()
+                ->with([
+                    'translations',         // Tłumaczenia dla Question (content, explanation)
+                    'answers.translations', // Tłumaczenia dla Answer (content)
+                ])
+                ->get(); // Pobierz wszystkie pasujące pytania
+
+            // Zwróć strukturę danych do zakeszowania
+            return [
+                // Używamy CategoryResource, aby załadować tłumaczenia dla kategorii
+                'category'  => new CategoryResource($category->load('translations')),
+                // Używamy zasobu pytań (może być nowy lub dostosowany istniejący)
+                // Ważne: Użyj LearnQuestionResource lub upewnij się, że TestQuestionResource zwraca explanation
+                'questions' => TestQuestionResource::collection($questions),
+                // Jeśli TestQuestionResource już zawiera 'explanation', możesz go użyć:
+                // 'questions' => TestQuestionResource::collection($questions)
+            ];
+        });
+
+        // Zwróć dane z cache (lub świeżo pobrane) jako JSON
+        return response()->json($learnData);
+    }
+
     // Show all categories
     public function getCategories()
     {
