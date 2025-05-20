@@ -10,6 +10,7 @@ use App\Models\QuestionTranslation;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class ImportCsvSeeder extends Seeder
@@ -60,45 +61,87 @@ class ImportCsvSeeder extends Seeder
 
                 $row = array_combine($header, $rowData);
 
-                // --- Kategorie ---
+                // --- Kategorie (Uproszczone tworzenie z polskim slugiem) ---
                 $categoryNames = explode(',', $row['Kategorie'] ?? '');
                 $categoryIds   = [];
                 foreach ($categoryNames as $categoryName) {
-                    $trimmedName = trim($categoryName);
+                    $trimmedName = trim($categoryName); // Np. "B", "AM"
                     if (empty($trimmedName)) {
                         continue;
                     }
 
-                    // Znajdź tłumaczenie polskie
-                    $translation = CategoryTranslation::where('locale', 'pl')
-                        ->where('name', $trimmedName)
-                        ->first();
-
                     $categoryId = null;
-                    if ($translation) {
-                        $categoryId = $translation->category_id;
-                        // Można by tu dodać logikę aktualizacji/dodawania innych tłumaczeń,
-                        // ale dla uproszczenia pomijamy to - zakładamy, że kategorie są już kompletne.
+
+                    // Sprawdź cache najpierw
+                    if (isset($categoryCache[$trimmedName])) {
+                        $categoryId = $categoryCache[$trimmedName];
                     } else {
-                                                          // Utwórz główny rekord kategorii
-                        $category   = Category::create(); // Tworzy tylko ID + timestamps
-                        $categoryId = $category->id;
+                        // Jeśli nie ma w cache, spróbuj znaleźć lub stworzyć w bazie
+                        // Użyjemy transakcji dla bezpieczeństwa tworzenia Category i Translation
+                        try {
+                            DB::transaction(function () use ($trimmedName, &$categoryId, &$categoryCache, $rowCount) {
+                                // 1. Znajdź lub stwórz główny rekord Category powiązany z polskim tłumaczeniem
+                                //    Szukamy tłumaczenia, bo ono ma unikalną nazwę (trimmedName)
+                                $translation = CategoryTranslation::where('locale', 'pl')
+                                    ->where('name', $trimmedName)
+                                    ->first();
 
-                        // Utwórz polskie tłumaczenie
-                        CategoryTranslation::create([
-                            'category_id' => $categoryId,
-                            'locale'      => 'pl',
-                            'name'        => $trimmedName,
-                            // 'description' => $row['Opis Kategorii PL'] ?? null, // Jeśli masz takie kolumny
-                        ]);
+                                if ($translation) {
+                                                                        // Znaleziono istniejące tłumaczenie, pobierz ID kategorii
+                                    $category = $translation->category; // Zakładając poprawną relację w modelu
+                                    if (! $category) {
+                                        // Rzadki przypadek osieroconego tłumaczenia - zaloguj i obsłuż
+                                        throw new \Exception("Osierocone tłumaczenie dla '{$trimmedName}' (ID: {$translation->id})");
+                                    }
+                                    $categoryId = $category->id;
+                                    $createdNew = false; // Flaga wskazująca, czy tworzyliśmy nowy rekord
+                                } else {
+                                    // Nie znaleziono tłumaczenia, stwórz nową kategorię
+                                    $category   = Category::create();
+                                    $categoryId = $category->id;
+                                    $createdNew = true;
+                                }
 
-                        // Możesz dodać tutaj tworzenie innych tłumaczeń dla NOWEJ kategorii, jeśli są w CSV
-                        // np. dla 'en', 'de', 'ua', jeśli masz kolumny typu 'Category Name [ENG]'
+                                // 2. Stwórz lub zaktualizuj polskie tłumaczenie, dodając slug
+                                //    Używamy updateOrCreate, aby obsłużyć oba przypadki (nowy/istniejący)
+                                //    i dodać slug, jeśli go brakuje.
+                                CategoryTranslation::updateOrCreate(
+                                    [ // Warunki wyszukiwania
+                                        'category_id' => $categoryId,
+                                        'locale'      => 'pl',
+                                    ],
+                                    [ // Wartości do wstawienia/aktualizacji
+                                        'name' => 'Kategoria ' . $trimmedName,
+                                        'slug' => Str::slug('Kategoria ' . $trimmedName), // Generuj slug z krótkiej nazwy
+                                                                                          // 'description' => null, // Możesz dodać, jeśli potrzebujesz
+                                    ]
+                                );
 
-                        $this->command->info("Utworzono kategorię: '{$trimmedName}' (ID: {$categoryId})");
+                                // Zaktualizuj cache
+                                $categoryCache[$trimmedName] = $categoryId;
+
+                                if ($createdNew) {
+                                    $this->command->info("Row {$rowCount}: Utworzono kategorię: '{$trimmedName}' (ID: {$categoryId}) wraz ze slugiem PL.");
+                                }
+
+                            }); // Koniec transakcji dla jednej kategorii
+
+                        } catch (Throwable $e) {
+                            // Złap błąd z transakcji, zaloguj i zdecyduj co dalej
+                            Log::error("Błąd podczas tworzenia/aktualizacji kategorii '{$trimmedName}' w wierszu {$rowCount}: " . $e->getMessage());
+                            $this->command->error("Błąd przetwarzania kategorii '{$trimmedName}' w wierszu {$rowCount}. Pomijanie przypisania tej kategorii.");
+                            // Możesz zdecydować, czy pominąć całe pytanie, czy tylko tę kategorię
+                            // Na razie pomijamy tylko przypisanie tej kategorii - pętla continue nie jest tu potrzebna
+                        }
+
+                    } // Koniec else (nie było w cache)
+
+                    // Dodaj ID do listy, jeśli zostało poprawnie uzyskane
+                    if ($categoryId) {
+                        $categoryIds[] = $categoryId;
                     }
-                    $categoryIds[] = $categoryId;
-                }
+
+                } // Koniec pętli foreach dla nazw kategorii
 
                 // --- Pytanie ---
                 $questionTypeRaw = strtoupper(trim($row['Typ'] ?? ''));

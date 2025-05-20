@@ -16,10 +16,14 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(Category::class)->constrained()->onDelete('cascade');
             $table->string('locale')->index();
+
             $table->string('name');
+            $table->string('slug');
             $table->text('description')->nullable();
+
             $table->unique(['category_id', 'locale']);
-            // $table->unique(['locale', 'name']);
+            $table->unique(['locale', 'slug']);
+
             $table->timestamps();
         });
     }
