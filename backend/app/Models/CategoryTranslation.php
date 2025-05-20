@@ -16,6 +16,7 @@ class CategoryTranslation extends Model
         'category_id',
         'locale',
         'name',
+        'slug',
         'description',
     ];
 
