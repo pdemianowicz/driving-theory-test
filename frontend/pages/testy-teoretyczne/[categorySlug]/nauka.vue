@@ -1,7 +1,5 @@
 <template>
-  <!-- Stan Ładowania - Skeleton -->
   <div v-if="learnMode.pending.value" class="animate-pulse">
-    <!-- Szkielet Nagłówka -->
     <div class="flex justify-between items-center mb-4 sm:mb-6 pb-3 border-b border-gray-200 dark:border-gray-700">
       <div class="h-5 bg-gray-300 dark:bg-gray-700 rounded w-1/3"></div>
       <div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/4"></div>
@@ -29,7 +27,6 @@
     </div>
   </div>
 
-  <!-- Stan Błędu -->
   <div
     v-else-if="learnMode.error.value || (!learnMode.pending.value && !learnMode.currentQuestion.value && !learnMode.isSessionFinished.value)"
     class="text-center py-20 text-red-500 dark:text-red-400">
@@ -38,9 +35,7 @@
     <TestButton @click="learnMode.goBack" class="mt-4 max-w-xs mx-auto !bg-gray-300 dark:!bg-gray-600">Wróć do wyboru</TestButton>
   </div>
 
-  <!-- Stan Nauki -->
   <div v-else-if="learnMode.currentQuestion.value">
-    <!-- Nagłówek -->
     <div class="flex items-center justify-between font-semibold text-sm text-gray-500 dark:text-[#c0bab2] mb-2">
       <span class="">
         Kategoria {{ learnMode.categoryName.value }}
@@ -49,16 +44,14 @@
       <span class="">Pytanie {{ learnMode.currentQuestionDisplayIndex.value + 1 }} / {{ learnMode.totalQuestions.value }}</span>
     </div>
 
-    <!-- Główny Grid -->
     <div class="grid lg:grid-cols-12 lg:grid-rows-[auto] gap-4">
-      <!-- Kolumna Lewa: Media -->
       <div class="col-span-12 lg:col-span-9">
         <TestMediaDisplay :data="learnMode.currentQuestion.value.media" />
       </div>
 
-      <!-- Kolumna Prawa: Przyciski Akcji (Desktop) -->
       <div class="hidden lg:flex flex-col lg:col-span-3">
         <TestButton @click="learnMode.goBack" class="hidden lg:block !bg-gray-300 dark:!bg-gray-600">Przerwij naukę</TestButton>
+        <TestButton class="hidden lg:block !bg-gray-300 dark:!bg-gray-600 mt-2">Zresetuj postęp</TestButton>
 
         <div class="flex flex-col gap-2 mt-auto">
           <button
@@ -86,12 +79,9 @@
         </div>
       </div>
 
-      <!-- Treść Pytania -->
       <TestQuestion :data="learnMode.currentQuestion.value.content" class="col-span-12" />
 
-      <!-- Odpowiedzi, Wyjaśnienie -->
       <div class="col-span-12">
-        <!-- Przyciski Odpowiedzi -->
         <div :class="['flex w-full gap-2 mb-5', learnMode.currentQuestion.value.type === 'basic' ? 'flex-row' : 'flex-col']">
           <button
             v-for="answer in learnMode.currentQuestion.value.answers"
@@ -107,7 +97,6 @@
           </button>
         </div>
 
-        <!-- Sekcja Wyjaśnienia -->
         <div
           v-if="learnMode.isAnswered.value && learnMode.shouldShowExplanation.value"
           class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 mb-5">
@@ -119,7 +108,6 @@
         </div>
       </div>
 
-      <!-- Przycisk Następne Pytanie - Wersja Mobile -->
       <TestButton
         @click="learnMode.nextQuestion"
         :disabled="!learnMode.isAnswered.value"
@@ -129,7 +117,6 @@
     </div>
   </div>
 
-  <!-- Stan Końca Nauki -->
   <div v-else-if="learnMode.isSessionFinished.value" class="text-center py-16">
     <h2 class="text-2xl font-semibold mb-4 text-slate-800 dark:text-stone-300">Zakończono sesję nauki!</h2>
     <p class="text-gray-700 dark:text-stone-400 mb-1">
@@ -153,8 +140,6 @@ definePageMeta({
 
 const learnMode = useLearnMode();
 
-// Funkcja do stylowania przycisków odpowiedzi (zostaje w komponencie, bo jest czysto wizualna)
-// Korzysta ze stanu udostępnionego przez learnMode
 function getAnswerButtonClass(answer) {
   const base =
     "border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 focus:ring-blue-500";

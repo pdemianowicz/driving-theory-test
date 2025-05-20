@@ -1,6 +1,5 @@
 <template>
   <div class="max-w-[1200px] mx-auto py-10 md:py-16 lg:py-24">
-    <!-- Sekcja SEO i Nagłówek -->
     <section class="text-center mb-12 md:mb-16">
       <h1 class="text-4xl sm:text-5xl lg:text-6xl text-pretty tracking-tight font-bold text-slate-800 dark:text-stone-300">
         Rozpocznij Test na Prawo Jazdy
@@ -10,32 +9,25 @@
       </p>
     </section>
 
-    <!-- Sekcja Wyboru i Startu Testu -->
     <section class="max-w-2xl mx-auto bg-neutral-100 dark:bg-[#1d2021] p-6 sm:p-8 rounded-xl shadow-lg transition-colors duration-500">
-      <!-- Komunikat o ładowaniu -->
       <div v-if="pending" class="text-center text-gray-500 dark:text-stone-400">Ładowanie dostępnych kategorii...</div>
-
-      <!-- Komunikat o błędzie -->
       <div v-else-if="error" class="text-center text-red-500 dark:text-red-400">Nie udało się załadować kategorii. Spróbuj odświeżyć stronę.</div>
 
-      <!-- Formularz Wyboru (gdy dane załadowane) -->
       <form v-else-if="categories && categories.length > 0" @submit.prevent="startTest">
-        <!-- 1. Wybór Kategorii -->
         <div class="mb-6">
           <label for="category-select" class="block text-lg font-medium mb-2 text-slate-800 dark:text-stone-300">Wybierz kategorię:</label>
           <select
             id="category-select"
-            v-model="selectedCategory"
+            v-model="selectedCategorySlug"
             required
             class="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-[#282c2d] text-slate-800 dark:text-stone-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
             <option disabled value="">-- Proszę wybrać kategorię --</option>
-            <option v-for="category in categories" :key="category.id" :value="category.id">
+            <option v-for="category in categories" :key="category.id" :value="category.slug">
               {{ category.name }} - {{ category.description || "Prawo jazdy" }}
             </option>
           </select>
         </div>
 
-        <!-- 2. Wybór Trybu -->
         <div class="mb-8">
           <span class="block text-lg font-medium mb-3 text-slate-800 dark:text-stone-300">Wybierz tryb:</span>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -55,20 +47,17 @@
           </div>
         </div>
 
-        <!-- 3. Przycisk Start -->
         <button
           type="submit"
-          :disabled="!selectedCategory || !selectedMode"
+          :disabled="!selectedCategorySlug || !selectedMode"
           class="w-full bg-blue-500 text-neutral-50 font-bold px-6 py-4 rounded-lg shadow-sm text-lg transition-colors duration-300 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
           Rozpocznij Test
         </button>
       </form>
 
-      <!-- Komunikat o braku kategorii -->
       <div v-else class="text-center text-gray-500 dark:text-stone-400">Brak dostępnych kategorii testów do wyboru.</div>
     </section>
 
-    <!-- Sekcja Opisów Trybów (Dodatkowe SEO) -->
     <section class="mt-16 md:mt-24 max-w-4xl mx-auto text-slate-800 dark:text-stone-300">
       <h2 class="text-2xl sm:text-3xl font-bold text-center mb-8">Poznaj dostępne tryby</h2>
       <div class="space-y-8">
@@ -97,76 +86,63 @@
     </section>
   </div>
 </template>
-
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { useRuntimeConfig } from "#app"; // Lub import { useRuntimeConfig } from 'nuxt/app'; w zależności od wersji
-
 const router = useRouter();
 const config = useRuntimeConfig();
 
-// Stan komponentu
-const selectedCategory = ref(""); // Przechowuje ID wybranej kategorii
-const selectedMode = ref(""); // Przechowuje ID wybranego trybu (np. 'exam', 'learn', 'hardest')
+const selectedCategorySlug = ref("");
+const selectedMode = ref("");
 
-// Dostępne tryby - można to też pobierać z API, jeśli tryby są dynamiczne
 const availableModes = ref([
   { id: "exam", name: "Symulacja Egzaminu" },
   { id: "learn", name: "Tryb Nauki" },
   { id: "hardest", name: "Najtrudniejsze Pytania" },
 ]);
 
-// Pobieranie kategorii
 const {
   data: categories,
   pending,
   error,
 } = await useFetch(`${config.public.apiBase}/api/categories`, {
-  lazy: false, // Czekamy na dane przed renderowaniem (lub true jeśli chcesz szkielet)
-  server: true, // Pobieramy dane po stronie serwera dla SEO
+  lazy: false,
+  server: true,
 });
 
-// Obsługa błędów pobierania
 if (error.value) {
   console.error("Błąd podczas pobierania kategorii na stronie /testy-teoretyczne:", error.value);
-  // Można tu dodać logowanie błędów do systemu monitoringu
 }
 
-// Funkcja rozpoczynająca test
 function startTest() {
-  if (!selectedCategory.value || !selectedMode.value) {
-    alert("Proszę wybrać kategorię i tryb testu.");
+  if (!selectedCategorySlug.value || !selectedMode.value) {
+    console.warn("Wybierz kategorię i tryb");
     return;
   }
 
-  const categoryId = selectedCategory.value;
-  const mode = selectedMode.value; // 'exam', 'learn', lub 'hardest'
+  const categorySlugValue = selectedCategorySlug.value;
+  const modeId = selectedMode.value;
 
-  let targetPath = "";
+  let path = "";
 
-  // Mapowanie 'mode' na odpowiednią ścieżkę (trasę)
-  switch (mode) {
+  const baseTestPath = "/testy-teoretyczne";
+
+  switch (modeId) {
     case "exam":
-      targetPath = "/exam"; // Przekieruj do strony trybu egzaminu
+      path = `${baseTestPath}/${categorySlugValue}/egzamin/`;
       break;
     case "learn":
-      targetPath = "/learn"; // Przekieruj do strony trybu nauki
+      path = `${baseTestPath}/${categorySlugValue}/nauka/`;
       break;
     case "hardest":
-      targetPath = "/hardest"; // Przekieruj do strony trybu najtrudniejszych pytań
+      path = `${baseTestPath}/${categorySlugValue}/najtrudniejsze/`;
       break;
     default:
-      console.error("Nieznany tryb testu:", mode);
-      alert("Wystąpił błąd. Nieznany tryb testu.");
-      return; // Nie przekierowuj, jeśli tryb jest nieznany
+      console.error("Nieznany tryb testu:", modeId);
+      return;
   }
 
-  // Przekierowanie do odpowiedniej strony z ID kategorii jako parametrem query
-  router.push(`${targetPath}?id=${categoryId}`);
+  router.push(path);
 }
 
-// Ustawienia SEO dla strony (jeśli używasz useHead)
 useHead({
   title: "Testy na Prawo Jazdy Online - Wybierz Kategorię i Tryb",
   meta: [
@@ -178,7 +154,4 @@ useHead({
   ],
 });
 </script>
-
-<style scoped>
-/* Można dodać dodatkowe style, jeśli Tailwind nie wystarcza */
-</style>
+<style scoped></style>

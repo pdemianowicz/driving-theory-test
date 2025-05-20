@@ -80,7 +80,7 @@ export const useTestStore = defineStore("test", () => {
     stopQuestionTimer();
   }
 
-  async function initTest(categoryId) {
+  async function initTest(categoryIdentifier) {
     isLoading.value = true;
     isTestFinished.value = false;
     clearTimers();
@@ -93,23 +93,29 @@ export const useTestStore = defineStore("test", () => {
 
     try {
       const csrfToken = nuxtApp.$csrfToken;
+      const headers = {
+        "X-XSRF-TOKEN": csrfToken,
+        "X-Locale": "pl",
+        // "X-Locale": route.params.locale || "pl_PL",
+      };
+
+      const bodyPayload = {};
+      bodyPayload.category_slug = categoryIdentifier;
+
       const data = await $fetch(`${config.public.apiBase}/api/initTest`, {
         method: "POST",
         credentials: "include",
-        headers: {
-          "X-XSRF-TOKEN": csrfToken,
-          "X-Locale": "pl",
-        },
-        body: { category_id: categoryId },
+        headers: headers,
+        body: bodyPayload,
       });
 
       testId.value = data.test_id;
       questions.value = data.questions;
-      categoryName.value = data.category.name;
-      console.log("API Response Data:", data);
+      categoryName.value = data.category ? data.category.name : "Nieznana Kategoria";
+      console.log("API Response Data (initTest):", data);
 
       if (!questions.value || questions.value.length === 0) {
-        console.warn("API returned no questions for this category.");
+        console.warn("API returned no questions for this category (slug: " + categoryIdentifier + ").");
         isLoading.value = false;
         return;
       }
@@ -117,7 +123,7 @@ export const useTestStore = defineStore("test", () => {
       startMainTimer();
       startQuestionTimer();
     } catch (err) {
-      console.error("Error initializing test:", err);
+      console.error("Error initializing test (slug: " + categoryIdentifier + "):", err);
       clearTimers();
       router.push("/");
     } finally {

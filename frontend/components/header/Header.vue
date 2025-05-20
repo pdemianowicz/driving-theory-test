@@ -54,9 +54,9 @@
 const isAuthenticated = ref(false);
 
 const navItems = [
-  { name: "Testy Teoretyczne", route: "/testy-teoretyczne", label: "" },
+  { name: "Testy Teoretyczne", route: "/testy-teoretyczne/", label: "" },
   // { name: "Blog", route: "/blog", label: "New" },
-  { name: "Blog", route: "/blog", label: "" },
+  { name: "Blog", route: "/blog/", label: "" },
 ];
 
 const [isMobileMenuOpen, toggleMobileMenu] = useToggle(false);

@@ -13,7 +13,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ItemNotFoundException;
 
 class TestController extends Controller
@@ -21,40 +20,60 @@ class TestController extends Controller
     const MAX_POSSIBLE_SCORE = 74;
     const PASSING_SCORE      = 68;
 
-    public function getLearnQuestions(Request $request, Category $category)
+    public function getLearnQuestions(Request $request, string $categorySlug)
     {
-                                                                  // Ustawienie lokalizacji na podstawie nagłówka (opcjonalne, ale dobre dla tłumaczeń)
-        $locale = $request->header('X-Locale', App::getLocale()); // Pobierz z nagłówka lub użyj domyślnego
+
+        $locale = $request->header('X-Locale', App::getLocale());
         App::setLocale($locale);
 
-        // Klucz cache unikalny dla kategorii i lokalizacji
-        $cacheKey = 'learn_questions:' . $category->id . ':' . $locale;
+        $category = Category::whereHas('translations', function ($query) use ($categorySlug, $locale) {
+            $query->where('slug', $categorySlug)->where('locale', $locale);
+        })->firstOrFail();
 
-        // Spróbuj pobrać z cache, jeśli nie ma, wykonaj zapytanie i zapisz w cache
-        // Cache::forget($cacheKey); // Użyj do czyszczenia cache podczas dewelopmentu
+        $cacheKey = 'learn_questions:cat_id_' . $category->id . ':' . $locale;
+
+        // // Klucz cache unikalny dla kategorii i lokalizacji
+        // $cacheKey = 'learn_questions:' . $category->id . ':' . $locale;
+
+        // // Spróbuj pobrać z cache, jeśli nie ma, wykonaj zapytanie i zapisz w cache
+        // // Cache::forget($cacheKey); // Użyj do czyszczenia cache podczas dewelopmentu
+        // $learnData = Cache::rememberForever($cacheKey, function () use ($category) {
+        //     // Pobierz wszystkie pytania dla tej kategorii
+        //     // Eager load tłumaczeń dla pytań, odpowiedzi i wyjaśnień
+        //     $questions = $category->questions()
+        //         ->with([
+        //             'translations',         // Tłumaczenia dla Question (content, explanation)
+        //             'answers.translations', // Tłumaczenia dla Answer (content)
+        //         ])
+        //         ->get(); // Pobierz wszystkie pasujące pytania
+
+        //     // Zwróć strukturę danych do zakeszowania
+        //     return [
+        //         // Używamy CategoryResource, aby załadować tłumaczenia dla kategorii
+        //         'category'  => new CategoryResource($category->load('translations')),
+        //         // Używamy zasobu pytań (może być nowy lub dostosowany istniejący)
+        //         // Ważne: Użyj LearnQuestionResource lub upewnij się, że TestQuestionResource zwraca explanation
+        //         'questions' => TestQuestionResource::collection($questions),
+        //         // Jeśli TestQuestionResource już zawiera 'explanation', możesz go użyć:
+        //         // 'questions' => TestQuestionResource::collection($questions)
+        //     ];
+        // });
+
         $learnData = Cache::rememberForever($cacheKey, function () use ($category) {
-            // Pobierz wszystkie pytania dla tej kategorii
-            // Eager load tłumaczeń dla pytań, odpowiedzi i wyjaśnień
             $questions = $category->questions()
                 ->with([
-                    'translations',         // Tłumaczenia dla Question (content, explanation)
-                    'answers.translations', // Tłumaczenia dla Answer (content)
+                    'translations',
+                    'answers.translations',
                 ])
-                ->get(); // Pobierz wszystkie pasujące pytania
+                ->orderBy('id')
+                ->get();
 
-            // Zwróć strukturę danych do zakeszowania
             return [
-                // Używamy CategoryResource, aby załadować tłumaczenia dla kategorii
-                'category'  => new CategoryResource($category->load('translations')),
-                // Używamy zasobu pytań (może być nowy lub dostosowany istniejący)
-                // Ważne: Użyj LearnQuestionResource lub upewnij się, że TestQuestionResource zwraca explanation
+                'category'  => new CategoryResource($category->loadMissing('translations')),
                 'questions' => TestQuestionResource::collection($questions),
-                // Jeśli TestQuestionResource już zawiera 'explanation', możesz go użyć:
-                // 'questions' => TestQuestionResource::collection($questions)
             ];
         });
 
-        // Zwróć dane z cache (lub świeżo pobrane) jako JSON
         return response()->json($learnData);
     }
 
@@ -75,39 +94,65 @@ class TestController extends Controller
     {
 
         $request->validate([
-            'category_id' => 'required|exists:categories,id',
+            'category_slug' => 'required|string|exists:category_translations,slug',
         ]);
 
-        $headerLocale = $request->header('X-Locale');
-        App::setLocale($headerLocale);
+        $categorySlug = $request->input('category_slug');
+        $locale       = App::getLocale(); // Pobierz bieżący język ustawiony przez middleware
 
-        $category = Category::with('translations')->findOrFail($request->category_id);
+        // $headerLocale = $request->header('X-Locale');
+        // App::setLocale($headerLocale);
+
+        // $category = Category::with('translations')->findOrFail($request->category_id);
+        $category = Category::whereHas('translations', function ($query) use ($categorySlug, $locale) {
+            $query->where('slug', $categorySlug)->where('locale', $locale);
+        })->with('translations')->firstOrFail();
 
         $questions = $this->selectQuestions($category);
 
-        $test = DB::transaction(function () use ($category, $questions) {
-            $test = Test::create([
-                'user_id'            => Auth::id(),
-                'category_id'        => $category->id,
-                'started_at'         => now(),
-                'total_questions'    => $questions->count(),
-                'max_possible_score' => self::MAX_POSSIBLE_SCORE,
-                'score'              => 0,
-            ]);
+        if ($questions->isEmpty()) {
+            return response()->json(['message' => 'Nie znaleziono pytań dla wybranej kategorii.'], 404);
+        }
 
-            $this->createTestQuestions($test, $questions);
+        // $test = DB::transaction(function () use ($category, $questions) {
+        //     $test = Test::create([
+        //         'user_id'            => Auth::id(),
+        //         'category_id'        => $category->id,
+        //         'started_at'         => now(),
+        //         'total_questions'    => $questions->count(),
+        //         'max_possible_score' => self::MAX_POSSIBLE_SCORE,
+        //         'score'              => 0,
+        //     ]);
 
-            return $test;
-        });
+        //     $this->createTestQuestions($test, $questions);
 
-        $testQuestions = $test->testQuestions()->with(['question.translations', 'question.answers.translations'])->orderBy('question_order')->get();
+        //     return $test;
+        // });
+
+        // $testQuestions = $test->testQuestions()->with(['question.translations', 'question.answers.translations'])->orderBy('question_order')->get();
+
+        // return response()->json([
+        //     'test_id'            => $test->id,
+        //     // 'questions'          => TestQuestionResource::collection($testQuestions),
+        //     'questions'          => TestQuestionResource::collection($questions),
+        //     'category'           => new CategoryResource($category),
+        //     'max_possible_score' => self::MAX_POSSIBLE_SCORE,
+        // ]);
+
+        $test = Test::create([
+            'user_id'         => Auth::id(),
+            'category_id'     => $category->id,
+            'started_at'      => now(),
+            'total_questions' => $questions->count(),
+        ]);
+
+        $this->createTestQuestions($test, $questions);
 
         return response()->json([
-            'test_id'            => $test->id,
-            // 'questions'          => TestQuestionResource::collection($testQuestions),
-            'questions'          => TestQuestionResource::collection($questions),
-            'category'           => new CategoryResource($category),
-            'max_possible_score' => self::MAX_POSSIBLE_SCORE,
+            'test_id'   => $test->id,
+            'questions' => TestQuestionResource::collection($questions),
+            'category'  => new CategoryResource($category),
+            'message'   => 'Sesja testowa rozpoczęta!',
         ]);
 
     }

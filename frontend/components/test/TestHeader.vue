@@ -2,7 +2,7 @@
   <div class="flex items-center lg:grid grid-cols-12 lg:gap-4 mb-2">
     <div class="col-span-12 lg:col-span-5 flex items-center font-semibold text-sm text-gray-500 dark:text-[#c0bab2]">
       <span class="lg:hidden">Pytanie {{ currentQuestionIndex + 1 }}/32</span>
-      <span class="hidden lg:block">Kategoria {{ categoryName }}</span>
+      <span class="hidden lg:block">{{ categoryName }}</span>
       <span class="ml-1 text-xs">({{ questionPoints }} pkt.)</span>
     </div>
 

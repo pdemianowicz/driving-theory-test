@@ -14,4 +14,4 @@ Route::post('/{test}/{questionOrder}/answer', [TestController::class, 'answerQue
 Route::post('/{test}/finish', [TestController::class, 'finishTest']);
 Route::get('/{test}/results', [TestController::class, 'getTestResult']);
 
-Route::get('/categories/{category}/learn-questions', [TestController::class, 'getLearnQuestions']);
+Route::get('/learn-questions/{categorySlug}', [TestController::class, 'getLearnQuestions']);
