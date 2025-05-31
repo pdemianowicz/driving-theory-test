@@ -27,39 +27,39 @@
 <script setup>
 const testimonials = [
   {
-    name: "Paulina Pogorzelska",
-    username: "@PaulinaP",
-    image: "https://i.pravatar.cc/100?img=1",
+    name: "Ewa Wiśniewska",
+    username: "@EwciaW",
+    image: "https://i.pravatar.cc/100?img=41",
     text: "Bardzo dobra aplikacja do nauki. Uwielbiam się z niej uczyć. Jest bardzo przydatna do przyswajania wiedzy. Planuję prawo jazdy w przyszłym roku. Jednak już od wakacji korzystam z aplikacji. Jestem mega zadowolona z materiału i formy. Gdy mam tylko chwilę wolnego siadam i się uczę.",
   },
   {
-    name: "Filipskyo",
-    username: "@Filipskyo",
+    name: "Szumii",
+    username: "@Szumii",
     image: "https://i.pravatar.cc/100?img=2",
     text: "Pakiet kupiony dzień przed egzaminem, o wiele więcej pytań niż w aplikacji od mojej szkoły jazdy. Teoria zaliczona na 100% polecam.",
   },
   {
     name: "Agata Klosek",
     username: "@AgataK",
-    image: "https://i.pravatar.cc/100?img=3",
+    image: "https://i.pravatar.cc/100?img=9",
     text: "Super aplikacja.. wiele więcej pytań w porównaniu z innymi aplikacjami.. a jeśli włączysz opcję automatycznego przełączania nauka idzie wręcz błyskawicznie 👍.",
   },
   {
-    name: "Paula Love live",
-    username: "@PaulaLive",
+    name: "Filipskyo",
+    username: "@Filipskyo",
     image: "https://i.pravatar.cc/100?img=4",
     text: "Korzystam z aplikacji już drugi raz (kat. A teraz D) i jeśli będzie konieczność skorzystania po raz trzeci to napewno z tą aplikacją.",
   },
   {
-    name: "Szymon 258",
-    username: "@Szymon258",
+    name: "ZuzannaK",
+    username: "@ZuziaK",
     image: "https://i.pravatar.cc/100?img=5",
     text: "Fajna aplikacja do nauki teorii, zrozumiałe uzasadnienia odpowiedzi. Polecam przerobić sobie najpierw pytania działami a potem robić testy. Serdecznie polecam.",
   },
   {
     name: "Karolina D",
     username: "@KarolinaD",
-    image: "https://i.pravatar.cc/100?img=6",
+    image: "https://i.pravatar.cc/100?img=27",
     text: "Bardzo dobra apka, dzięki niej zdane za pierwszym razem 💪 baza pytań ta sama co w Wordzie, nauka idzie bezproblemowo 🙂.",
   },
   {
@@ -69,15 +69,15 @@ const testimonials = [
     text: "Aplikacja jest świetna! Dzięki niej mogłem uczyć się w każdej wolnej chwili i zdałem egzamin teoretyczny bez problemu. Polecam każdemu, kto chce się dobrze przygotować!",
   },
   {
-    name: "ZuzannaK",
-    username: "@ZuziaK",
+    name: "Szymonte",
+    username: "@Szymonte",
     image: "https://i.pravatar.cc/100?img=8",
     text: "Bardzo pomocna aplikacja! Interfejs jest przejrzysty, a pytania dobrze wytłumaczone. Dzięki niej udało mi się ogarnąć teorię w krótkim czasie.",
   },
   {
     name: "Wójcik",
     username: "@Wojcik",
-    image: "https://i.pravatar.cc/100?img=9",
+    image: "https://i.pravatar.cc/100?img=14",
     text: "Zdane 74/74 ",
   },
 ];
