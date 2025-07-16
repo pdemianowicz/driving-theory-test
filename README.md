@@ -1,32 +1,89 @@
-# SuperPrawko 🇵🇱 🚗
+# SUPER PRAWKO 🇵🇱
 
-> A modern web application built with Nuxt.js for practicing the official Polish driving theory test.
+> Nowoczesna aplikacja webowa stworzona w Nuxt.js do nauki i przygotowania się do egzaminu teoretycznego na prawo jazdy w Polsce.
 
 ![SuperPrawko Main Screen](./Image_1.jpg)
 
-## About
+## 📋 Spis Treści
 
-SuperPrawko helps Polish driver candidates prepare for the national driving theory exam. It provides a realistic simulation using the official question database.
+- [O Aplikacji](#o-aplikacji)
+- [Funkcjonalności](#funkcjonalności)
+- [Zrzuty Ekranu](#zrzuty-ekranu)
+- [Stos Technologiczny](#stos-technologiczny)
+- [Jak Zacząć](#jak-zacząć)
+- [Planowane Funkcjonalności](#planowane-funkcjonalności)
 
-**Key Features:**
+## 🎯 O Aplikacji
 
-- realistic exam simulation (structure, timing, rules)
-- Official & up-to-date question database (images & videos included)
-- Detailed results review (score, pass/fail, question analysis)
-- Clean, responsive UI (Desktop & Mobile)
-- Dark Mode support
+**SUPER PRAWKO** to kompleksowe narzędzie dla kandydatów na kierowców, umożliwiające skuteczne przygotowanie się do państwowego egzaminu teoretycznego. Aplikacja oferuje realistyczną symulację egzaminu z wykorzystaniem oficjalnej bazy pytań zgodnej z polskimi przepisami.
 
-## Screenshots
+## ✨ Funkcjonalności
 
-**Exam View**
+### 🎮 Symulacja Egzaminu Państwowego
+
+- **Oficjalna struktura egzaminu**: 32 pytania zgodnie z wymogami państwowymi
+  - **20 pytań podstawowych** z odpowiedziami TAK/NIE
+  - **12 pytań specjalistycznych** z opcjami A/B/C
+- **System czasowy**: 30 sekund na każde pytanie
+- **Automatyczne losowanie** pytań z oficjalnej bazy danych
+- **Wybór kategorii** prawa jazdy
+
+### 📚 Tryb Nauki _(wkrótce dostępny)_
+
+- Nauka podzielona na działy tematyczne
+- Możliwość skupienia się na konkretnych obszarach wiedzy
+- Progresywne uczenie się
+
+### 📊 Panel Wyników
+
+- **Natychmiastowa ocena**: status zdany/niezdany
+- **Szczegółowa analiza**: przegląd wszystkich odpowiedzi
+- **Identyfikacja błędów**: podgląd pytań z nieprawidłowymi odpowiedziami
+- **Możliwość powtórki**: analiza konkretnych pytań
+
+### 🎨 Interfejs Użytkownika
+
+- **Responsywny design**: optymalizacja dla desktop i mobile
+- **Czytelny layout**: intuicyjna nawigacja
+- **Wsparcie multimediów**: obsługa obrazów i materiałów wideo
+- **Tryb ciemny**: komfort użytkowania
+
+## 📱 Zrzuty Ekranu
+
+### Dashboard
+
+![SuperPrawko Dashboard](./Image_4.jpg)
+![SuperPrawko Panel](./Image_5.jpg)
+
+### Widok Egzaminu
+
 ![SuperPrawko Exam View](./Image_2.jpg)
-_Exam interface showing question, media, options, and timers._
+_Interfejs egzaminu z pytaniem, materiałami multimedialnymi, opcjami odpowiedzi i licznikami czasu._
 
-**Results Summary**
+### Podsumowanie Wyników
+
 ![SuperPrawko Results Summary](./Image_3.jpg)
-_Post-exam screen with score, pass/fail status, and question grid._
+_Ekran wyników z oceną końcową, statusem zdany/niezdany i przeglądem wszystkich pytań._
 
-## Tech Stack
+### Wersja Mobilna
 
-- **Frontend:** Nuxt/Vue, Pinia, Tailwind CSS
-- **Backend:** Laravel API.
+<p align="center">
+  <img src="./Image_7.jpg" width="200" alt="Mobile view 1"/>
+  <img src="./Image_8.jpg" width="200" alt="Mobile view 2"/>
+  <img src="./Image_9.jpg" width="200" alt="Mobile view 3"/>
+</p>
+
+## 🛠️ Stos Technologiczny
+
+- **Nuxt.js/Vue.js** - framework aplikacji
+- **Pinia** - zarządzanie stanem aplikacji
+- **Tailwind CSS** - stylowanie i responsywność
+- **Laravel API** - serwer aplikacji i API
+- **Baza danych** - SQLite
+
+## 📈 Planowane Funkcjonalności
+
+- [ ] **Tryb nauki z działami** - systematyczna nauka według tematów
+- [ ] **Statystyki postępów** - śledzenie rozwoju umiejętności
+- [ ] **Tryb offline** - nauka bez połączenia internetowego
+- [ ] **Wyjaśnienia do pytań** - szczegółowe omówienia
