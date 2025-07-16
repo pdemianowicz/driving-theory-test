@@ -44,8 +44,6 @@
 ### 🎨 Interfejs Użytkownika
 
 - **Responsywny design**: optymalizacja dla desktop i mobile
-- **Czytelny layout**: intuicyjna nawigacja
-- **Wsparcie multimediów**: obsługa obrazów i materiałów wideo
 - **Tryb ciemny**: komfort użytkowania
 
 ## 📱 Zrzuty Ekranu
